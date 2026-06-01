@@ -33,7 +33,7 @@ func runKill(cmd *cobra.Command, args []string) error {
 	input := args[0]
 	isPort, port := classifyArg(input)
 
-	entries, scanErr := ports.Scan()
+	entries, scanErr := ports.Scan(ports.ScanOptions{IncludeEstablished: true})
 	if scanErr != nil {
 		return scanErr
 	}

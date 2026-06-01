@@ -1,6 +1,7 @@
 package ports
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -8,39 +9,75 @@ import (
 	"github.com/shirou/gopsutil/v4/process"
 )
 
-// Scan returns all active TCP connections on the local machine.
-// LISTEN entries are sorted before ESTABLISHED entries.
-// If a process name cannot be resolved, the entry uses "unknown".
-func Scan() ([]PortEntry, error) {
+// ScanOptions controls what the scanner returns.
+type ScanOptions struct {
+	IncludeEstablished bool
+}
+
+// Scan returns active TCP LISTEN ports by default.
+// Pass ScanOptions{IncludeEstablished: true} to also include outbound connections.
+func Scan(opts ScanOptions) ([]PortEntry, error) {
 	conns, err := psnet.Connections("tcp")
 	if err != nil {
 		return nil, err
 	}
 
-	entries := make([]PortEntry, 0, len(conns))
+	// key: "pid:port:state" — deduplicates same port on multiple interfaces
+	seen := make(map[string]bool)
+	entries := make([]PortEntry, 0)
+
 	for _, c := range conns {
 		if c.Laddr.Port == 0 {
 			continue
 		}
-		entry := buildEntry(c)
-		entries = append(entries, entry)
+
+		state := normalizeState(c.Status)
+
+		if state == "ESTABLISHED" && !opts.IncludeEstablished {
+			continue
+		}
+
+		if state != "LISTEN" && state != "ESTABLISHED" {
+			continue
+		}
+
+		// drop ESTABLISHED on loopback — internal IPC, not useful to show
+		if state == "ESTABLISHED" && isLoopback(c.Raddr.IP) {
+			continue
+		}
+
+		key := fmt.Sprintf("%d:%d:%s", c.Pid, c.Laddr.Port, state)
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+
+		entries = append(entries, buildEntry(c, state))
 	}
 
 	sort.Slice(entries, func(i, j int) bool {
-		return statePriority(entries[i].State) < statePriority(entries[j].State)
+		pi, pj := statePriority(entries[i].State), statePriority(entries[j].State)
+		if pi != pj {
+			return pi < pj
+		}
+		return entries[i].Port < entries[j].Port
 	})
 
 	return entries, nil
 }
 
-func buildEntry(c psnet.ConnectionStat) PortEntry {
+func isLoopback(ip string) bool {
+	return strings.HasPrefix(ip, "127.") || ip == "::1"
+}
+
+func buildEntry(c psnet.ConnectionStat, state string) PortEntry {
 	return PortEntry{
 		Port:     c.Laddr.Port,
 		Address:  normalizeAddr(c.Laddr.IP),
 		Protocol: "tcp",
 		PID:      c.Pid,
 		Process:  resolveProcessName(c.Pid),
-		State:    normalizeState(c.Status),
+		State:    state,
 	}
 }
 
@@ -72,14 +109,7 @@ func normalizeState(s string) string {
 		return "LISTEN"
 	case "ESTABLISHED":
 		return "ESTABLISHED"
-	case "TIME_WAIT":
-		return "TIME_WAIT"
-	case "CLOSE_WAIT":
-		return "CLOSE_WAIT"
 	default:
-		if s == "" {
-			return "UNKNOWN"
-		}
 		return strings.ToUpper(s)
 	}
 }
