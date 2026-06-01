@@ -10,10 +10,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var listJSON bool
+
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List active local ports",
 	RunE:  runList,
+}
+
+func init() {
+	listCmd.Flags().BoolVar(&listJSON, "json", false, "Output as JSON")
 }
 
 func runList(cmd *cobra.Command, _ []string) error {
@@ -25,6 +31,10 @@ func runList(cmd *cobra.Command, _ []string) error {
 			os.Exit(1)
 		}
 		return err
+	}
+
+	if listJSON {
+		return output.PrintJSON(cmd.OutOrStdout(), entries)
 	}
 
 	output.PrintTable(cmd.OutOrStdout(), entries)
