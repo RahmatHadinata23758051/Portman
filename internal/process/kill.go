@@ -51,7 +51,7 @@ var systemProcessNames = map[string]struct{}{
 // IsSystemProcess reports whether name matches a known long-running system
 // process. The check is case-insensitive and ignores a trailing .exe suffix.
 func IsSystemProcess(name string) bool {
-	normalized := strings.ToLower(strings.TrimSuffix(name, ".exe"))
+	normalized := strings.TrimSuffix(strings.ToLower(name), ".exe")
 	_, found := systemProcessNames[normalized]
 	return found
 }
