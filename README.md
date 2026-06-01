@@ -2,106 +2,98 @@
 
 > Stop fighting EADDRINUSE.
 
-portman is a local developer utility to monitor and manage ports. It shows which process is using each local port and lets you safely stop the process without remembering commands like `lsof`, `netstat`, or `ss`.
+portman is a terminal port manager for developers. It shows which process owns each local port and lets you kill it — without memorizing `lsof`, `netstat`, or `ss`.
 
-## Why?
+![alt text](image.png)
 
-Every developer running local servers eventually encounters this error:
+---
 
-```txt
+## Why
+
+Every developer running local servers eventually hits this:
+
+```
 Error: listen EADDRINUSE: address already in use :::3000
 ```
 
-Instead of manually searching for the process holding the port and extracting the PID to kill it, `portman` provides a clean CLI and interactive terminal dashboard to list, filter, and safely stop processes that block development ports.
+Finding the culprit takes three commands you never remember. portman gives you one.
 
 ---
 
 ## Features
 
-* **Interactive Live Dashboard**: Visual TUI to monitor active ports, connection states, and processes in real-time.
-* **Process Termination**: Safe and forced process killing directly by port number or process name.
-* **Smart Safety**: Warnings when attempting to terminate database engines or critical system processes.
-* **Script Friendly**: JSON output support for listing ports programmatically.
-* **Zero Configuration**: Single statically compiled binary with no external runtimes required.
+- Live TUI dashboard — active ports, process names, PIDs, and states at a glance
+- Kill by port or process name, with confirmation before anything is terminated
+- SIGTERM first, SIGKILL only when you ask for it
+- Warns before touching known system processes (postgres, nginx, redis, etc.)
+- JSON output for scripting and piping
+- Single static binary — no runtime, no config, no setup
 
 ---
 
 ## Installation
 
-### Using Go
-
-If you have Go installed, install `portman` directly:
+**Go install**
 
 ```bash
 go install github.com/nata/portman@latest
 ```
 
-### Homebrew (macOS / Linux)
+**Homebrew** (coming soon)
 
 ```bash
-# Placeholder for future homebrew formula
 brew install nata/tap/portman
 ```
 
-### Manual Binary Download
+**Manual download**
 
-Download pre-compiled binaries directly from the Releases page for your operating system:
-* Linux (amd64 / arm64)
-* macOS (amd64 / arm64)
-* Windows (amd64)
+Pre-built binaries for Linux, macOS, and Windows are available on the [Releases](https://github.com/nata/portman/releases) page.
 
 ---
 
 ## Usage
 
-### Interactive Terminal Dashboard (TUI)
-
-To launch the live interactive dashboard:
+### Open the dashboard
 
 ```bash
 portman
 ```
 
-This displays a real-time table of all active ports, process statistics, and keybindings.
-
-To launch the dashboard pre-filtered for a specific process or port:
+Launches the home screen. Press `l` to start scanning ports, `/` to open with a filter, or `q` to quit.
 
 ```bash
 portman filter node
 ```
 
-### Command Line Interface (CLI)
+Skips the home screen and opens the live dashboard pre-filtered for `node`.
 
-#### List Active Ports
-
-List active local ports in a human-readable table (shows LISTEN ports only by default):
+### List ports
 
 ```bash
 portman list
 ```
 
-Expected output:
-```txt
-PORT  PROCESS   PID    STATE   ADDRESS  PROTOCOL
-3000  node      12345  LISTEN  0.0.0.0  tcp
-5432  postgres  1203   LISTEN  0.0.0.0  tcp
-```
+Prints all LISTEN ports in a clean aligned table.
 
-To also include established outbound connections:
+```
+PORT   PROCESS     PID    STATE   ADDRESS    PROTOCOL
+3000   node        12345  LISTEN  0.0.0.0    tcp
+5432   postgres    1203   LISTEN  0.0.0.0    tcp
+6379   redis-ser…  1391   LISTEN  127.0.0.1  tcp
+```
 
 ```bash
 portman list --all
 ```
 
-#### List as JSON
-
-Get machine-readable output:
+Includes ESTABLISHED outbound connections as well.
 
 ```bash
 portman list --json
 ```
 
-Expected output:
+Outputs JSON to stdout. Nothing else — safe to pipe.
+
 ```json
 [
   {
@@ -115,114 +107,112 @@ Expected output:
 ]
 ```
 
-#### Kill a Process by Port
+### Kill a process
 
-To stop a process using a specific port (e.g., port 3000):
+**By port**
 
 ```bash
 portman kill 3000
 ```
 
-Expected interaction:
-```txt
+```
 Found node PID 12345 using port 3000.
-Kill this process? [y/N] y
-Killed node (PID 12345).
+Kill this process? [y/N]
 ```
 
-#### Kill a Process by Name
-
-To stop processes by process name (e.g., node):
+**By process name**
 
 ```bash
 portman kill node
 ```
 
-Expected interaction:
-```txt
-Found the following processes:
-- node (PID: 12345, Port: 3000)
-- node (PID: 12346, Port: 3001)
-Kill these processes? [y/N] y
-Killed node (PID 12345).
-Killed node (PID 12346).
-```
+If multiple processes match, all are listed before you confirm. No partial kills.
 
-#### Skip Confirmation Prompt
-
-Use `--yes` to skip the confirmation prompt:
+**Skip confirmation** (for scripts)
 
 ```bash
 portman kill 3000 --yes
 ```
 
-#### Force Kill
-
-To force terminate a process using SIGKILL instead of SIGTERM:
+**Force kill** (SIGKILL instead of SIGTERM)
 
 ```bash
 portman kill 3000 --force
 ```
 
----
-
-## CLI Command Reference
-
-* `portman` - Opens the interactive TUI.
-* `portman list` - Prints active LISTEN ports in an aligned table.
-* `portman list --all` - Prints active LISTEN and ESTABLISHED ports.
-* `portman list --json` - Output active ports as JSON.
-* `portman kill <port|process>` - Find processes and prompt to stop them.
-* `portman filter <query>` - Opens the TUI with a pre-applied search filter.
-* `portman version` - Prints current version.
+`--yes` and `--force` are independent flags.
 
 ---
 
-## TUI Keybindings
+## TUI keybindings
 
-When running inside the interactive terminal dashboard:
-
-* `↑ / ↓`: Navigate active process list.
-* `k`: Prompt to kill the selected process.
-* `r`: Manually refresh the port list.
-* `/`: Enter filter mode to search by port or process name.
-* `esc`: Clear active filter or quit.
-* `q`: Quit the application.
-* `enter`: Confirm actions (e.g., confirming process termination).
+| Key | Action |
+|-----|--------|
+| `↑` / `↓` | Navigate |
+| `l` / `Enter` | Open port list |
+| `k` | Kill selected process |
+| `r` | Refresh manually |
+| `/` | Filter by port or process name |
+| `Esc` | Exit filter mode |
+| `q` | Quit |
 
 ---
 
-## Safety Note
+## Safety
 
-* **Graceful Termination**: `portman` attempts graceful termination using SIGTERM first. It only issues SIGKILL when the `--force` flag is specified.
-* **Confirmation Prompts**: By default, no process is terminated without explicit confirmation from the user.
-* **System Process Protection**: If a process matches a known system or persistent service (e.g., `postgres`, `mysql`, `redis-server`, `nginx`, `docker`, `systemd`, `launchd`), `portman` displays a clear warning prior to prompting for action:
-  ```txt
-  Warning: postgres (PID 1203) may be a long-running system process.
-  ```
+portman will not terminate a process without your confirmation unless `--yes` is provided.
+
+Termination defaults to SIGTERM. SIGKILL is only used when `--force` is passed.
+
+If the process name matches a known long-running service, portman warns you before asking:
+
+```
+Warning: postgres may be a long-running database process.
+Confirm carefully or use --force only if you are sure.
+```
+
+Guarded process names: `systemd`, `launchd`, `svchost`, `postgres`, `mysql`,
+`redis-server`, `docker`, `dockerd`, `containerd`, `sshd`, `nginx`, `apache2`.
+
+---
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `portman` | Open interactive TUI |
+| `portman list` | Print active LISTEN ports |
+| `portman list --all` | Include ESTABLISHED connections |
+| `portman list --json` | JSON output |
+| `portman kill <port\|name>` | Kill process by port or name |
+| `portman kill <port> --yes` | Skip confirmation |
+| `portman kill <port> --force` | Force kill with SIGKILL |
+| `portman filter <query>` | Open TUI with filter pre-applied |
+| `portman version` | Print version |
 
 ---
 
 ## Roadmap
 
-* **v0.1.0**: CLI listing (`list`), JSON outputs, and safe termination (`kill`).
-* **v0.2.0**: Live terminal interactive dashboard (TUI) powered by Bubble Tea.
-* **v0.3.0**: Command filtering and platform-specific improvement stubs.
-* **v0.4.0**: Enhanced Windows and cross-platform process resolving support.
-* **v1.0.0**: Stable, optimized cross-platform release.
+| Version | Scope |
+|---------|-------|
+| `v0.1.0` | CLI list and kill |
+| `v0.2.0` | Live TUI dashboard |
+| `v0.3.0` | JSON output, filtering, home screen |
+| `v0.4.0` | Windows process resolution improvements |
+| `v1.0.0` | Stable cross-platform release |
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Please follow these guidelines:
-1. Fork the repository and create your branch.
-2. Ensure all changes pass unit tests (`go test ./...`).
-3. Format all code using `gofmt` before committing.
-4. Keep dependencies minimal and standard library-focused where possible.
+1. Fork the repository and create a branch for your change
+2. Run `go test ./...` before submitting
+3. Format with `gofmt` — unformatted code will not be merged
+4. Keep pull requests focused — one change per PR
 
 ---
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](./LICENSE) for details.
