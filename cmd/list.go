@@ -10,7 +10,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var listJSON bool
+var (
+	listJSON       bool
+	allConnections bool
+)
 
 var listCmd = &cobra.Command{
 	Use:   "list",
@@ -19,11 +22,12 @@ var listCmd = &cobra.Command{
 }
 
 func init() {
+	listCmd.Flags().BoolVar(&allConnections, "all", false, "Include established connections")
 	listCmd.Flags().BoolVar(&listJSON, "json", false, "Output as JSON")
 }
 
 func runList(cmd *cobra.Command, _ []string) error {
-	entries, err := ports.Scan()
+	entries, err := ports.Scan(ports.ScanOptions{IncludeEstablished: allConnections})
 	if err != nil {
 		if isPermissionError(err) {
 			fmt.Fprintln(os.Stderr, "Permission denied while reading process information.")
