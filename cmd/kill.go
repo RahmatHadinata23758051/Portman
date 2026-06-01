@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/nata/portman/internal/ports"
-	"github.com/nata/portman/internal/process"
+	"github.com/RahmatHadinata23758051/Portman/internal/ports"
+	"github.com/RahmatHadinata23758051/Portman/internal/process"
 	"github.com/spf13/cobra"
 )
 

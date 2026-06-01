@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/nata/portman/internal/ports"
+	"github.com/RahmatHadinata23758051/Portman/internal/ports"
 )
 
 // PrintJSON marshals entries as a JSON array and writes it to w.

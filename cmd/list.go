@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/nata/portman/internal/output"
-	"github.com/nata/portman/internal/ports"
+	"github.com/RahmatHadinata23758051/Portman/internal/output"
+	"github.com/RahmatHadinata23758051/Portman/internal/ports"
 	"github.com/spf13/cobra"
 )
 

@@ -36,18 +36,18 @@ Finding the culprit takes three commands you never remember. portman gives you o
 **Go install**
 
 ```bash
-go install github.com/nata/portman@latest
+go install github.com/RahmatHadinata23758051/Portman@latest
 ```
 
 **Homebrew** (coming soon)
 
 ```bash
-brew install nata/tap/portman
+brew install RahmatHadinata23758051/tap/portman
 ```
 
 **Manual download**
 
-Pre-built binaries for Linux, macOS, and Windows are available on the [Releases](https://github.com/nata/portman/releases) page.
+Pre-built binaries for Linux, macOS, and Windows are available on the [Releases](https://github.com/RahmatHadinata23758051/Portman/releases) page.
 
 ---
 

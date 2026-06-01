@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/RahmatHadinata23758051/Portman/internal/ports"
+	"github.com/RahmatHadinata23758051/Portman/internal/process"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/nata/portman/internal/ports"
-	"github.com/nata/portman/internal/process"
 )
 
 // Message types used by the Bubble Tea runtime.

@@ -1,6 +1,6 @@
 package tui
 
-import "github.com/nata/portman/internal/ports"
+import "github.com/RahmatHadinata23758051/Portman/internal/ports"
 
 const refreshInterval = 2
 
