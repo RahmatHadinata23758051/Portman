@@ -1,9 +1,8 @@
 package process
 
 import (
+	"os"
 	"strings"
-
-	gopsutil "github.com/shirou/gopsutil/v4/process"
 )
 
 // Killer terminates a process by PID.
@@ -12,23 +11,21 @@ type Killer interface {
 	Kill(pid int32, force bool) error
 }
 
-// SystemKiller implements Killer using the OS process API via gopsutil.
-// On POSIX: Terminate sends SIGTERM, Kill sends SIGKILL.
-// On Windows: both use TerminateProcess (no SIGTERM equivalent exists).
+// SystemKiller implements Killer using the OS process API.
 type SystemKiller struct{}
 
 // Kill terminates the process with the given PID.
 // When force is false, a graceful termination is attempted first.
 // When force is true, the process is killed immediately.
 func (SystemKiller) Kill(pid int32, force bool) error {
-	p, err := gopsutil.NewProcess(pid)
+	proc, err := os.FindProcess(int(pid))
 	if err != nil {
 		return err
 	}
 	if force {
-		return p.Kill()
+		return proc.Kill()
 	}
-	return p.Terminate()
+	return terminateGraceful(proc)
 }
 
 // systemProcessNames is the set of process names that warrant a warning

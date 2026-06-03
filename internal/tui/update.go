@@ -54,10 +54,10 @@ func doScan() tea.Cmd {
 	}
 }
 
-func doKill(entry ports.PortEntry) tea.Cmd {
+func doKill(entry ports.PortEntry, force bool) tea.Cmd {
 	return func() tea.Msg {
 		k := process.SystemKiller{}
-		err := k.Kill(entry.PID, false)
+		err := k.Kill(entry.PID, force)
 		return killResultMsg{err: err}
 	}
 }
@@ -74,6 +74,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case scanResultMsg:
 		return m.onScan(msg), nil
 	case killResultMsg:
+		if msg.err != nil {
+			m.err = msg.err
+			return m, nil
+		}
 		return m, doScan()
 	case tea.KeyMsg:
 		return m.onKey(msg)
@@ -106,6 +110,8 @@ func (m Model) onScan(msg scanResultMsg) Model {
 }
 
 func (m Model) onKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	m.err = nil // Clear error on any keypress
+
 	if m.confirm == confirmPending {
 		return m.onConfirmKey(msg)
 	}
@@ -192,7 +198,14 @@ func (m Model) onConfirmKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if len(m.visible) > 0 && m.cursor < len(m.visible) {
 			entry := m.visible[m.cursor]
 			m.confirm = confirmNone
-			return m, doKill(entry)
+			return m, doKill(entry, false)
+		}
+		m.confirm = confirmNone
+	case "f", "F":
+		if len(m.visible) > 0 && m.cursor < len(m.visible) {
+			entry := m.visible[m.cursor]
+			m.confirm = confirmNone
+			return m, doKill(entry, true)
 		}
 		m.confirm = confirmNone
 	default:

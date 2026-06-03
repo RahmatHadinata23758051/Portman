@@ -228,7 +228,7 @@ func (m Model) renderTable() string {
 		entry := m.visible[m.cursor]
 		b.WriteString("\n")
 		b.WriteString("  " + styleConfirm.Render(
-			fmt.Sprintf("Kill process %s PID %d using port %d? [y/N] ",
+			fmt.Sprintf("Kill process %s PID %d using port %d? [y/f/N] ",
 				entry.Process, entry.PID, entry.Port),
 		))
 		b.WriteString("\n")
