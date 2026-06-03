@@ -1,6 +1,7 @@
 package process
 
 import (
+	"fmt"
 	"os"
 	"strings"
 )
@@ -18,6 +19,9 @@ type SystemKiller struct{}
 // When force is false, a graceful termination is attempted first.
 // When force is true, the process is killed immediately.
 func (SystemKiller) Kill(pid int32, force bool) error {
+	if pid <= 0 {
+		return fmt.Errorf("invalid PID %d: cannot terminate system or unknown process", pid)
+	}
 	proc, err := os.FindProcess(int(pid))
 	if err != nil {
 		return err
